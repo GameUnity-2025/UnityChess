@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityChess;
 using UnityEngine;
@@ -198,7 +198,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager> {
 		blackTurnIndicator.enabled = sideToMove == Side.Black;
 	}
 
-	private void UpdateGameStringInputField() => GameStringInputField.text = GameManager.Instance.SerializeGame();
+	private void UpdateGameStringInputField() {
+        if (GameStringInputField != null) {
+            GameStringInputField.text = GameManager.Instance.SerializeGame();
+        }
+    }
 
 	public void GoToMainMenu()
 	{
