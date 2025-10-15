@@ -633,7 +633,6 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1340170416}
-  - {fileID: 1145236372}
   m_Father: {fileID: 1222833318}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
@@ -749,7 +748,7 @@ GameObject:
   - component: {fileID: 390880492}
   - component: {fileID: 390880495}
   m_Layer: 5
-  m_Name: PlayPvPButton
+  m_Name: Play
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1486,11 +1485,11 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 738944426}
-  m_Father: {fileID: 284809750}
+  m_Father: {fileID: 1222833318}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -355.76996, y: 147}
+  m_AnchoredPosition: {x: 236.23004, y: -14.999985}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1145236373
@@ -1687,6 +1686,7 @@ RectTransform:
   - {fileID: 273637097}
   - {fileID: 741865958}
   - {fileID: 390880491}
+  - {fileID: 1145236372}
   - {fileID: 284809750}
   - {fileID: 1991872532}
   m_Father: {fileID: 0}

@@ -1,4 +1,4 @@
-﻿
+
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -69,23 +69,16 @@ public class MainMenu : MonoBehaviour
     // Scene name of the main game board
     private string gameSceneName = "Board";
 
+    // This is the main function for the PLAY button.
     public void PlayPlayerVsPlayer()
     {
-        // Here we will eventually set a static flag or use a ScriptableObject to tell GameManager what mode to start
-        Debug.Log("Starting Player vs Player mode...");
-        // For now, we just load the scene. The GameManager's default is PvP.
+        // Use PlayerPrefs to set the desired game mode. This is robust across scene loads.
+        PlayerPrefs.SetString("GameMode", "PlayerVsAI");
+        PlayerPrefs.Save();
+        Debug.Log("Saved GameMode as PlayerVsAI to PlayerPrefs.");
+
+        // Load the game scene.
         StartCoroutine(FadeThenLoad(gameSceneName));
-
-    }
-
-    public void PlayPlayerVsAI()
-    {
-        // This will require more logic to select side (White/Black)
-        // For now, let's just log it.
-        Debug.Log("Player vs AI mode selected - (Not fully implemented yet)");
-        // Example of how it could work:
-        // GameManager.StartAsPlayerVsAI(Side.White);
-        // SceneManager.LoadScene(gameSceneName);
     }
 
     public void OpenSettings()
@@ -98,6 +91,5 @@ public class MainMenu : MonoBehaviour
     {
         Debug.Log("Quitting game...");
         StartCoroutine(FadeThenQuit());
-
     }
 }
