@@ -388,6 +388,4 @@ public class GameManager : MonoBehaviourSingleton<GameManager> {
         // cuối cùng: vị trí transform (nếu ô chỉ là empty)
         return square.position;
     }
-
-
 }
