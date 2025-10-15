@@ -1,0 +1,4 @@
+[submodule "Assets/Scripts/UnityChessLib"]
+	path = Assets/Scripts/UnityChessLib
+	url = https://github.com/ErkrodC/UnityChessLib.git
+	branch = master
