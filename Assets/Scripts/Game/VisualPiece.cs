@@ -25,6 +25,7 @@ public class VisualPiece : MonoBehaviour
         potentialLandingSquares = new List<GameObject>();
         thisTransform = transform;
         boardCamera = Camera.main;
+        thisTransform.rotation = Quaternion.Euler(-90f, thisTransform.rotation.eulerAngles.y, 0f);
     }
 
     public void OnMouseDown()
@@ -32,6 +33,7 @@ public class VisualPiece : MonoBehaviour
         if (enabled)
         {
             piecePositionSS = boardCamera.WorldToScreenPoint(transform.position);
+
         }
     }
 
@@ -73,6 +75,8 @@ public class VisualPiece : MonoBehaviour
             }
 
             VisualPieceMoved?.Invoke(CurrentSquare, thisTransform, closestSquareTransform);
+
+            thisTransform.rotation = Quaternion.Euler(-90f, thisTransform.rotation.eulerAngles.y, 0f);
         }
     }
 

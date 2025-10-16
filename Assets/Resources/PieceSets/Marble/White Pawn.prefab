@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 33953785565752198}
   - component: {fileID: 23947402421797276}
   - component: {fileID: 114451527182471468}
-  - component: {fileID: 82728155}
+  - component: {fileID: 7540373001741942123}
   m_Layer: 0
   m_Name: White Pawn
   m_TagString: Untagged
@@ -30,7 +30,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 150, y: 150, z: 150}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -42,7 +42,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1474449236938152}
-  m_Mesh: {fileID: 4300002, guid: bcf49bd9de661ed44aab6cde0c2faba9, type: 3}
+  m_Mesh: {fileID: -5056013208839979972, guid: a79cc80941669884290efddae363891d, type: 3}
 --- !u!23 &23947402421797276
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -68,7 +68,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 4a9678da4add211449a88df6bdc9da92, type: 2}
+  - {fileID: -5731279877173591304, guid: f15639b50e7d43f4fb02c4630d678812, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -105,7 +105,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   PieceColor: 2
   PieceTypeManual: 
---- !u!135 &82728155
+--- !u!135 &7540373001741942123
 SphereCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -120,9 +120,9 @@ SphereCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 1
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Radius: 1.0590492
-  m_Center: {x: 0, y: 1.0590492, z: 0.00000014901161}
+  m_Radius: 0.0056983884
+  m_Center: {x: 0.000000008614734, y: -0.000000002910383, z: 0.0057220077}
