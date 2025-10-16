@@ -10,11 +10,21 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private AudioClip menuBgm;
     [SerializeField, Range(0f, 1f)] private float musicVolume = 0.6f;
     [SerializeField, Range(0.05f, 3f)] private float fadeTime = 0.5f;
+    
+    [Header("UI Panels")]
+    public GameObject mainButtonsContainer;
+    public GameObject playModePopup;
+
+    // Scene name of the main game board
+    private string gameSceneName = "Board";
 
     private void Awake()
     {
         EnsureMusicSource();
         PlayMenuBgm();
+        // Ensure popup is hidden on start
+        if (playModePopup != null) playModePopup.SetActive(false);
+        if (mainButtonsContainer != null) mainButtonsContainer.SetActive(true);
     }
 
     private void EnsureMusicSource()
@@ -66,18 +76,33 @@ public class MainMenu : MonoBehaviour
     }
     // ===== /BGM =====
 
-    // Scene name of the main game board
-    private string gameSceneName = "Board";
+    // --- Button Functions ---
 
-    // This is the main function for the PLAY button.
-    public void PlayPlayerVsPlayer()
+    public void ShowPlayModePopup()
     {
-        // Use PlayerPrefs to set the desired game mode. This is robust across scene loads.
+        playModePopup.SetActive(true);
+        mainButtonsContainer.SetActive(false);
+    }
+
+    public void HidePlayModePopup()
+    {
+        playModePopup.SetActive(false);
+        mainButtonsContainer.SetActive(true);
+    }
+
+    public void StartPlayVsAI()
+    {
         PlayerPrefs.SetString("GameMode", "PlayerVsAI");
         PlayerPrefs.Save();
-        Debug.Log("Saved GameMode as PlayerVsAI to PlayerPrefs.");
+        Debug.Log("Saved GameMode as PlayerVsAI. Loading game scene...");
+        StartCoroutine(FadeThenLoad(gameSceneName));
+    }
 
-        // Load the game scene.
+    public void StartPlayVsPlayer()
+    {
+        PlayerPrefs.SetString("GameMode", "PlayerVsPlayer");
+        PlayerPrefs.Save();
+        Debug.Log("Saved GameMode as PlayerVsPlayer. Loading game scene...");
         StartCoroutine(FadeThenLoad(gameSceneName));
     }
 
