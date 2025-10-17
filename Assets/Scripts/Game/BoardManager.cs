@@ -114,6 +114,8 @@ public class BoardManager : MonoBehaviourSingleton<BoardManager> {
             pieceGO.transform.Rotate(0f, UnityEngine.Random.Range(0f, 360f), 0f);
         }
         */
+        pieceGO.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+
         VisualPiece visualPiece = pieceGO.GetComponent<VisualPiece>();
         if (visualPiece != null)
         {
@@ -166,6 +168,13 @@ public class BoardManager : MonoBehaviourSingleton<BoardManager> {
         }
     }
 
+    public void FixAllPieceRotations()
+    {
+        foreach (var vp in GetComponentsInChildren<VisualPiece>(true))
+        {
+            vp.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+        }
+    }
 
 
 

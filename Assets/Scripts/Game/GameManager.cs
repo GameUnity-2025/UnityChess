@@ -168,6 +168,11 @@ public class GameManager : MonoBehaviourSingleton<GameManager> {
 			
 			await uciEngine.SetupNewGame(game);
 			NewGameStartedEvent?.Invoke();
+            if (BoardManager.Instance != null)
+            {
+                BoardManager.Instance.FixAllPieceRotations();
+                BoardManager.Instance.EnsureOnlyPiecesOfSideAreEnabled(SideToMove);
+            }
             // Bật đúng bên đang tới lượt
             if (BoardManager.Instance != null) BoardManager.Instance.EnsureOnlyPiecesOfSideAreEnabled(SideToMove);
 
@@ -189,7 +194,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager> {
         }
         else {
 			NewGameStartedEvent?.Invoke();
-		}
+            if (BoardManager.Instance != null)
+            {
+                BoardManager.Instance.FixAllPieceRotations();
+                BoardManager.Instance.EnsureOnlyPiecesOfSideAreEnabled(SideToMove);
+            }
+        }
 	}
 
 	public string SerializeGame() {
@@ -341,9 +351,17 @@ public class GameManager : MonoBehaviourSingleton<GameManager> {
                 PlaySfx(sfxMove);
 
         }
+        if (BoardManager.Instance != null)
+        {
+            BoardManager.Instance.FixAllPieceRotations();
+        }
 
         bool gameIsOver = game.HalfMoveTimeline.TryGetCurrent(out HalfMove tailHalfMove)
                   && (tailHalfMove.CausedStalemate || tailHalfMove.CausedCheckmate);
+
+        if (BoardManager.Instance != null)
+            BoardManager.Instance.EnsureOnlyPiecesOfSideAreEnabled(SideToMove);
+
         if (!gameIsOver
 			&& (SideToMove == Side.White && isWhiteAI
 			    || SideToMove == Side.Black && isBlackAI)
@@ -362,7 +380,13 @@ public class GameManager : MonoBehaviourSingleton<GameManager> {
 			endSquareGO.transform,
 			(move as PromotionMove)?.PromotionPiece
 		);
-	}
+
+        if (BoardManager.Instance != null)
+        {
+            BoardManager.Instance.FixAllPieceRotations();
+            BoardManager.Instance.EnsureOnlyPiecesOfSideAreEnabled(SideToMove);
+        }
+    }
 
 	public bool HasLegalMoves(Piece piece) {
 		return game.TryGetLegalMovesForPiece(piece, out _);
