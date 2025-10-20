@@ -1,6 +1,16 @@
 {
   "ExpandedNodes": [
-    ""
+    "",
+    "\\Assets",
+    "\\Assets\\Art",
+    "\\Assets\\Art\\Textures",
+    "\\Assets\\Resources\\PieceSets",
+    "\\Assets\\Scenes\\Board",
+    "\\Assets\\Scenes\\MainMenu",
+    "\\Assets\\Settings",
+    "\\Assets\\StreamingAssets",
+    "\\Assets\\TextMesh Pro"
   ],
+  "SelectedNode": "\\Assets\\Scripts\\Game\\GameManager.cs",
   "PreviewInSolutionExplorer": false
 }
