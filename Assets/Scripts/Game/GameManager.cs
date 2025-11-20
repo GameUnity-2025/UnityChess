@@ -311,17 +311,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         return "No AI engine";
     }
 
-    /// <summary>
-    /// Force switch to a specific AI engine type
-    /// </summary>
-    public void ForceAISwitch(AIFallbackManager.AIEngineType engineType)
-    {
-        if (uciEngine is AIFallbackManager fallbackManager)
-        {
-            fallbackManager.ForceSwitchTo(engineType);
-            Debug.Log($"[GameManager] Forced AI switch to: {engineType}");
-        }
-    }
     private void InitClock()
     {
         int sec = TimePrefs.GetSecondsOrDefault();
@@ -460,7 +449,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
                 uciEngine.Start();
             }
 
-            await Task.Delay(300);
+            // Give AI more time to initialize properly
+            await Task.Delay(500);
 
             if (uciEngine == null)
             {
@@ -482,14 +472,16 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
             bool aiTurnNow = (SideToMove == Side.White && isWhiteAI) || (SideToMove == Side.Black && isBlackAI);
 
-            if (aiTurnNow && !isReplayMode)
+            if (aiTurnNow && !isReplayMode && !IsAIThinking)
             {
+                IsAIThinking = true;
                 try
                 {
                     int currentDepth = SideToMove == Side.White ? WhiteAIDifficulty : BlackAIDifficulty;
                     Debug.Log($"[GameManager] AI turn - Side: {SideToMove}, Depth: {currentDepth}, Engine: {GetAIStatus()}");
 
                     Movement bestMove = await uciEngine.GetBestMove(aiThinkTimeMs, currentDepth);
+                    IsAIThinking = false;
 
                     if (bestMove != null)
                     {
@@ -503,7 +495,8 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"AI Move failed: {ex.Message}");
+                    IsAIThinking = false;
+                    Debug.LogError($"AI Move failed: {ex.Message}\n{ex.StackTrace}");
                 }
             }
         }
@@ -679,6 +672,34 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     }
 
 
+    private bool TryHandleSpecialMoveBehaviour(SpecialMove specialMove)
+    {
+        switch (specialMove)
+        {
+            case CastlingMove castlingMove:
+                if (BoardManager.Instance != null)
+                    BoardManager.Instance.CastleRook(castlingMove.RookSquare, castlingMove.GetRookEndSquare());
+                return true;
+
+            case EnPassantMove enPassantMove:
+                if (BoardManager.Instance != null)
+                    BoardManager.Instance.TryDestroyVisualPiece(enPassantMove.CapturedPawnSquare);
+                return true;
+
+            case PromotionMove promotionMove:
+                if (BoardManager.Instance != null)
+                {
+                    BoardManager.Instance.TryDestroyVisualPiece(promotionMove.Start);
+                    BoardManager.Instance.TryDestroyVisualPiece(promotionMove.End);
+                    BoardManager.Instance.CreateAndPlacePieceGO(promotionMove.PromotionPiece, promotionMove.End);
+                }
+                return true;
+
+            default:
+                return false;
+        }
+    }
+
     private async Task<bool> TryHandleSpecialMoveBehaviourAsync(SpecialMove specialMove)
     {
         switch (specialMove)
@@ -829,21 +850,31 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             if (!gameIsOver
                 && !isReplayMode
                 && !isReplayingMove
+                && !IsAIThinking
                 && uciEngine != null
                 && ((SideToMove == Side.White && isWhiteAI) || (SideToMove == Side.Black && isBlackAI)))
             {
                 IsAIThinking = true;
                 int currentDepth = SideToMove == Side.White ? WhiteAIDifficulty : BlackAIDifficulty;
-                Movement bestMove = await uciEngine.GetBestMove(aiThinkTimeMs, currentDepth);
-                IsAIThinking = false;
 
-                if (bestMove != null)
+                try
                 {
-                    DoAIMove(bestMove);
+                    Movement bestMove = await uciEngine.GetBestMove(aiThinkTimeMs, currentDepth);
+                    IsAIThinking = false;
+
+                    if (bestMove != null)
+                    {
+                        DoAIMove(bestMove);
+                    }
+                    else
+                    {
+                        Debug.LogError("AI Move failed: Engine returned a null move.");
+                    }
                 }
-                else
+                catch (Exception aiEx)
                 {
-                    Debug.LogError("AI Move failed: Engine returned a null move.");
+                    IsAIThinking = false;
+                    Debug.LogError($"[GameManager] AI Move exception: {aiEx.Message}\n{aiEx.StackTrace}");
                 }
             }
         }
@@ -881,20 +912,52 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
                 return;
             }
 
-            isReplayingMove = true;
-            OnPieceMoved(
-            move.Start,
-            movedPiece.transform,
-            endSquareGO.transform,
-            (move as PromotionMove)?.PromotionPiece
-            );
-            isReplayingMove = false;
+            // Execute the move directly without calling OnPieceMoved to avoid recursion
+            if ((move is not SpecialMove || TryHandleSpecialMoveBehaviour(move as SpecialMove))
+                && TryExecuteMove(move))
+            {
+                if (!unlimited) lastTickRealtime = Time.realtimeSinceStartup;
+
+                if (move is not SpecialMove && BoardManager.Instance != null)
+                {
+                    BoardManager.Instance.TryDestroyVisualPiece(move.End);
+                }
+
+                // Update visual piece position
+                Transform pieceTransform = movedPiece.transform;
+                if (move is PromotionMove && BoardManager.Instance != null)
+                {
+                    GameObject promotedPiece = BoardManager.Instance.GetPieceGOAtPosition(move.End);
+                    if (promotedPiece != null)
+                        pieceTransform = promotedPiece.transform;
+                }
+
+                if (pieceTransform != null)
+                {
+                    Vector3 center = GetSquareWorldCenter(endSquareGO.transform);
+                    float keepWorldY = pieceTransform.position.y;
+                    pieceTransform.SetParent(endSquareGO.transform, worldPositionStays: true);
+                    pieceTransform.position = new Vector3(center.x, keepWorldY, center.z);
+                    pieceTransform.localRotation = Quaternion.identity;
+                }
+
+                bool hasLast = game.HalfMoveTimeline.TryGetCurrent(out HalfMove lastHalfMoveAfterMove);
+                bool isCheck = hasLast && lastHalfMoveAfterMove.CausedCheck;
+
+                if (isCheck) PlaySfx(sfxCheck);
+                else PlaySfx(sfxMove);
+
+                if (BoardManager.Instance != null)
+                {
+                    BoardManager.Instance.FixAllPieceRotations();
+                    BoardManager.Instance.EnsureOnlyPiecesOfSideAreEnabled(SideToMove);
+                }
+            }
         }
         catch (Exception ex)
         {
             Debug.LogError($"[GameManager] Exception in DoAIMove: {ex.Message}\n{ex.StackTrace}");
             Debug.LogError($"[GameManager] Invalid move attempted: {move}");
-            // Optionally, end game or reset
         }
     }
 
