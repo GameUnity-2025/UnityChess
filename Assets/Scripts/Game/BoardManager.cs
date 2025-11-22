@@ -103,11 +103,63 @@ public class BoardManager : MonoBehaviourSingleton<BoardManager>
     {
         if (this == null) return;
 
-        OnNewGameStarted();
+        // 1. Reset the board visuals completely
+        ClearBoard();
+        if (capturedPiecesUI != null) capturedPiecesUI.ResetUI();
 
-        GameManager.Instance.HalfMoveTimeline.TryGetCurrent(out HalfMove latestHalfMove);
-        if (latestHalfMove.CausedCheckmate || latestHalfMove.CausedStalemate) SetActiveAllPieces(false);
-        else EnsureOnlyPiecesOfSideAreEnabled(GameManager.Instance.SideToMove);
+        // 2. Redraw the pieces in their new positions
+        List<(Square logicalSquare, Piece piece)> currentPieces = GameManager.Instance.CurrentPieces;
+        foreach ((Square logicalSquare, Piece piece) in currentPieces)
+        {
+            CreateAndPlacePieceGOAtPhysicalSquare(piece, logicalSquare);
+        }
+
+        // 3. Recalculate and rebuild the captured pieces UI from game history
+        if (capturedPiecesUI != null)
+        {
+            int latestIndex = GameManager.Instance.LatestHalfMoveIndex;
+            for (int i = 0; i <= latestIndex; i++)
+            {
+                HalfMove halfMove = GameManager.Instance.HalfMoveTimeline[i];
+                
+                // halfMove.CapturedPiece is a boolean flag indicating if a capture happened.
+                if (halfMove.CapturedPiece)
+                {
+                    // To find WHAT was captured, we must look at the board state BEFORE this move.
+                    // The board state before move 'i' is at BoardTimeline[i].
+                    Board boardBeforeMove = GameManager.Instance.Game.BoardTimeline[i];
+                    
+                    // The captured piece was on the destination square of the move,
+                    // unless it was an en-passant move.
+                    Square capturedPieceSquare;
+                    if (halfMove.Move is EnPassantMove enPassantMove)
+                    {
+                        capturedPieceSquare = enPassantMove.CapturedPawnSquare;
+                    }
+                    else
+                    {
+                        capturedPieceSquare = halfMove.Move.End;
+                    }
+                    
+                    Piece capturedPieceObject = boardBeforeMove[capturedPieceSquare];
+
+                    if (capturedPieceObject != null)
+                    {
+                        capturedPiecesUI.AddCapturedPiece(capturedPieceObject.GetType().Name, capturedPieceObject.Owner == Side.White);
+                    }
+                }
+            }
+        }
+
+        // 4. Set the correct piece interactivity
+        if (GameManager.Instance.HalfMoveTimeline.TryGetCurrent(out HalfMove latestHalfMove))
+        {
+            if (latestHalfMove.CausedCheckmate || latestHalfMove.CausedStalemate) SetActiveAllPieces(false);
+            else EnsureOnlyPiecesOfSideAreEnabled(GameManager.Instance.SideToMove);
+        } else {
+            // This case happens at the very start of the game, index -1.
+            EnsureOnlyPiecesOfSideAreEnabled(GameManager.Instance.SideToMove);
+        }
     }
 
 

@@ -47,6 +47,20 @@ public class CapturedPiecesUI : MonoBehaviour
         UpdateUI(isWhite);
     }
 
+    public void RemoveCapturedPiece(string pieceType, bool isWhite)
+    {
+        if (pieceType == "King") return;
+
+        Dictionary<string, int> capturedDict = isWhite ? whiteCapturedPieces : blackCapturedPieces;
+
+        if (capturedDict.ContainsKey(pieceType) && capturedDict[pieceType] > 0)
+        {
+            capturedDict[pieceType]--;
+        }
+
+        UpdateUI(isWhite);
+    }
+
     // Resets the UI for a new game
     public void ResetUI()
     {
