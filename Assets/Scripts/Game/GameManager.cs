@@ -76,6 +76,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     private bool isBlackAI;
     private bool lastWhiteAI;
     private bool lastBlackAI;
+    public bool IsReplayMode { get; set; } = false;
 
 
 
@@ -358,6 +359,14 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         BoardManager.Instance?.SetUserInputEnabled(false);
     }
 
+    public string GetAIStatus()
+    {
+        if (uciEngine is AIFallbackManager fallbackManager)
+        {
+            return fallbackManager.GetStatus();
+        }
+        return "No AI engine";
+    }
 
     private void Update()
     {
@@ -420,6 +429,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         LastEndReason = GameEndReason.None;
         LastWinner = Side.None;
         InitClock();
+
+        //_halfMoveIndicesForUndo = new Stack<int>();
+        //_halfMoveIndicesForUndo.Push(game.HalfMoveTimeline.HeadIndex);
 
         promotionTcs = null;
         if (UIManager.Instance != null)
@@ -668,6 +680,23 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
                 return true;
 
             case PromotionMove { PromotionPiece: null } promotionMove:
+                bool aiTurn = (SideToMove == Side.White && isWhiteAI)
+           || (SideToMove == Side.Black && isBlackAI);
+
+                if (aiTurn)
+                {
+                    var queen = PromotionUtil.GeneratePromotionPiece(ElectedPiece.Queen, SideToMove);
+                    promotionMove.SetPromotionPiece(queen);
+
+                    if (BoardManager.Instance != null)
+                    {
+                        BoardManager.Instance.TryDestroyVisualPiece(promotionMove.Start);
+                        BoardManager.Instance.TryDestroyVisualPiece(promotionMove.End);
+                        BoardManager.Instance.CreateAndPlacePieceGO(queen, promotionMove.End);
+                    }
+                    return true;
+                }
+
                 if (isReplayMode)
                 {
                     promotionMove.SetPromotionPiece(PromotionUtil.GeneratePromotionPiece(ElectedPiece.Queen, SideToMove));
@@ -680,6 +709,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
                     }
                     return true;
                 }
+
                 if (UIManager.Instance != null) UIManager.Instance.SetActivePromotionUI(true);
                 if (BoardManager.Instance != null) BoardManager.Instance.SetActiveAllPieces(false);
 
@@ -820,10 +850,10 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
                     && uciEngine != null
                     && ((SideToMove == Side.White && isWhiteAI) || (SideToMove == Side.Black && isBlackAI)))
         {
-            IsAIThinking = true; 
+            IsAIThinking = true;
             int currentDepth = SideToMove == Side.White ? WhiteAIDifficulty : BlackAIDifficulty;
             Movement bestMove = await uciEngine.GetBestMove(aiThinkTimeMs, currentDepth);
-            IsAIThinking = false; 
+            IsAIThinking = false;
 
             if (bestMove != null) DoAIMove(bestMove);
         }
