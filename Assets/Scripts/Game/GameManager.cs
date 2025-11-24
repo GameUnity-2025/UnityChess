@@ -1069,21 +1069,29 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         ResetGameToHalfMoveIndex(-1);
 
+        if (BoardManager.Instance != null)
+        {
+            BoardManager.Instance.SetActiveAllPieces(true);
+            BoardManager.Instance.FixAllPieceRotations();
+        }
+
         for (int i = 0; i < replayMoveList.Count; i++)
         {
             string moveString = replayMoveList[i];
             Square start = new Square(moveString.Substring(0, 2));
             Square end = new Square(moveString.Substring(2, 2));
+
             if (game.TryGetLegalMove(start, end, out Movement move))
             {
-                game.TryExecuteMove(move);
+                DoAIMove(move);
             }
         }
 
         currentReplayIndex = replayMoveList.Count - 1;
-        ResetGameToHalfMoveIndex(currentReplayIndex);
+
         Debug.Log($"Replay index đã được set thành: {currentReplayIndex}");
     }
+
 
     public void SetReplayIndex(int newIndex)
     {
