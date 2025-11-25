@@ -9,8 +9,10 @@ public class CapturedPiecesUI : MonoBehaviour
     public Transform blackArea;
 
     // This will be our prefab for displaying a captured piece icon and its count
-    public GameObject capturedPieceItemPrefab; 
-
+    public GameObject capturedPieceItemPrefab;
+    [Header("Captured piece colors")]
+    public Color whiteCapturedColor = Color.white;
+    public Color blackCapturedColor = Color.black;
     // Sprites for each piece
     public Sprite whitePawnSprite;
     public Sprite whiteRookSprite;
@@ -102,6 +104,7 @@ public class CapturedPiecesUI : MonoBehaviour
             {
                 pieceImage.sprite = GetSprite(pieceType, isWhite);
                 pieceImage.preserveAspect = true;
+                pieceImage.color = isWhite ? whiteCapturedColor : blackCapturedColor;
             }
 
             TextMeshProUGUI countText = itemGO.GetComponentInChildren<TextMeshProUGUI>();

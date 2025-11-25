@@ -6167,6 +6167,8 @@ MonoBehaviour:
   blackArea: {fileID: 328478236}
   capturedPieceItemPrefab: {fileID: 4248498767829523675, guid: 43095adeb75cd1f41ad545ce7539a359,
     type: 3}
+  whiteCapturedColor: {r: 1, g: 0.9333334, b: 0.5490196, a: 1}
+  blackCapturedColor: {r: 0.3019608, g: 0.17254902, b: 0.105882354, a: 1}
   whitePawnSprite: {fileID: 98217054743987540, guid: a480c9de1f08f9a4dac5fc0ff8b07fee,
     type: 3}
   whiteRookSprite: {fileID: -8466624454714946680, guid: 7ee8124bc3aeabe44b5b8364e59e7974,
