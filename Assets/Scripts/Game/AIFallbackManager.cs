@@ -26,7 +26,7 @@ namespace UnityChess.Engine
             {
                 try
                 {
-                    currentEngine = new MockUCIEngine();
+                    currentEngine = new StockfishUCIEngine();
                     currentEngine.Start();
                     isInitialized = true;
                     Debug.Log("[AI] Initialized Mock AI");

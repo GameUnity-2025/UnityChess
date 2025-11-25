@@ -33,7 +33,7 @@ public class MenuPanels : MonoBehaviour
 
         string label;
         if (TimePrefs.IsUnlimited(seconds))
-            label = "Time: ∞";
+            label = "Time: Unlimited";
         else
             label = $"Time: {seconds / 60:00}:{seconds % 60:00}";
 
