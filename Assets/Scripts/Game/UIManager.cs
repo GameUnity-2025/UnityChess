@@ -550,8 +550,12 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
             GameStringInputField.text = GameManager.Instance.SerializeGame();
     }
 
-    public void GoToMainMenu()
+    public async void GoToMainMenu()
     {
+        // Shut down AI engine before scene transition
+        if (GameManager.Instance != null) {
+            await GameManager.Instance.ShutDownEngine();
+        }
         UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
     }
 

@@ -3,7 +3,7 @@
 public static class TimePrefs
 {
     public const string KeySeconds = "TimeModeSeconds";
-    public const int Unlimited = -1; // ∞
+    public const int Unlimited = -1; // Unlimited time
 
     public static int GetSecondsOrDefault()
         => PlayerPrefs.GetInt(KeySeconds, Unlimited);
@@ -19,7 +19,7 @@ public static class TimePrefs
     // 👇 Thêm hàm này NGAY TRONG class, không được dán ngoài
     public static string FormatLabel(int seconds)
     {
-        if (IsUnlimited(seconds)) return "Thời gian: ∞";
+        if (IsUnlimited(seconds)) return "Thời gian: Unlimited";
         int m = seconds / 60, s = seconds % 60;
         return $"Thời gian: {m:00}:{s:00}";
     }

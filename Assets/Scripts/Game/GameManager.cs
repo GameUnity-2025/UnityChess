@@ -286,7 +286,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
     private void OnDestroy()
     {
         VisualPiece.VisualPieceMoved -= OnPieceMoved;
-        uciEngine?.ShutDown();
     }
 
     public Side GetHumanSide()
@@ -327,7 +326,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private string FormatTime(float sec)
     {
-        if (float.IsInfinity(sec)) return "∞";
+        if (float.IsInfinity(sec)) return "Unlimited";
         sec = Mathf.Max(0, sec);
         int m = Mathf.FloorToInt(sec / 60f);
         int s = Mathf.FloorToInt(sec % 60f);
@@ -444,7 +443,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         {
             if (uciEngine == null)
             {
-                uciEngine = new MockUCIEngine();
+                uciEngine = new StockfishUCIEngine();
                 uciEngine.Start();
             }
 
@@ -1008,13 +1007,27 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         if (UIManager.Instance != null) UIManager.Instance.SetTraversalBarVisibility(true);
     }
 
-    public void OnClick_ReturnToMenu()
+    public async void OnClick_ReturnToMenu()
     {
         Time.timeScale = 1f;
 
         if (UIManager.Instance != null) UIManager.Instance.SetTraversalBarVisibility(false);
 
+        // Shut down AI engine before scene transition
+        await ShutDownEngine();
+
         SceneManager.LoadScene("MainMenu");
+    }
+
+    public async Task ShutDownEngine()
+    {
+        // Wait for AI to finish thinking before shutting down
+        while (IsAIThinking) {
+            await Task.Delay(100); // Wait 100ms and check again
+        }
+        
+        uciEngine?.ShutDown();
+        uciEngine = null;
     }
 
     public void ReplayNextMove()
