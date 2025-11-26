@@ -588,7 +588,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenu
   musicSource: {fileID: 0}
-  menuBgm: {fileID: 8300000, guid: 58b8f47c72efc9247b86e407b73b5af0, type: 3}
+  menuBgm: {fileID: 0}
   musicVolume: 0.6
   fadeTime: 0.5
   mainButtonsContainer: {fileID: 1252782445}
