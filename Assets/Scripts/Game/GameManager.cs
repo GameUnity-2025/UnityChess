@@ -1066,7 +1066,9 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         if (game.TryGetLegalMove(start, end, out Movement move))
         {
+            isReplayingMove = true;
             DoAIMove(move);
+            isReplayingMove = false;
         }
         else
         {
@@ -1111,6 +1113,7 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             BoardManager.Instance.FixAllPieceRotations();
         }
 
+        isReplayingMove = true; 
         for (int i = 0; i < replayMoveList.Count; i++)
         {
             string moveString = replayMoveList[i];
@@ -1121,7 +1124,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             {
                 DoAIMove(move);
             }
+            else
+            {
+                Debug.LogError($"ReplayGoToEnd: Nước đi không hợp lệ? {moveString}.");
+            }
         }
+        isReplayingMove = false;
 
         currentReplayIndex = replayMoveList.Count - 1;
 
