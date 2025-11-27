@@ -186,6 +186,7 @@ public class BoardManager : MonoBehaviourSingleton<BoardManager>
 
         pieceGO.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
 
+
         VisualPiece visualPiece = pieceGO.GetComponent<VisualPiece>();
         if (visualPiece != null)
         {

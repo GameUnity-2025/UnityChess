@@ -25,7 +25,17 @@ public class VisualPiece : MonoBehaviour
         potentialLandingSquares = new List<GameObject>();
         thisTransform = transform;
         boardCamera = Camera.main;
-        thisTransform.rotation = Quaternion.Euler(-90f, thisTransform.rotation.eulerAngles.y, 0f);
+
+        // 1. Đặt tư thế cơ bản cho TẤT CẢ quân cờ: X = -90, giữ nguyên Y
+        Vector3 e = thisTransform.localRotation.eulerAngles;
+        thisTransform.localRotation = Quaternion.Euler(-90f, e.y, 0f);
+
+        // 2. Riêng quân MÃ TRẮNG: xoay thêm 90 độ quanh trục Y
+        if (PieceColor == Side.White && PieceTypeManual == "Knight")
+        {
+             e = thisTransform.localRotation.eulerAngles;
+            thisTransform.localRotation = Quaternion.Euler(e.x, e.y + 180f, e.z);
+        }
     }
 
     public void OnMouseDown()
