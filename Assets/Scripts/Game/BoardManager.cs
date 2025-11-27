@@ -184,8 +184,8 @@ public class BoardManager : MonoBehaviourSingleton<BoardManager>
             squareGO.transform
         );
 
-        pieceGO.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
-
+        // 🔥 DÙNG HƯỚNG NHÌN SANG TRÁI
+        pieceGO.transform.rotation = VisualPiece.LockedWorldRotation;
 
         VisualPiece visualPiece = pieceGO.GetComponent<VisualPiece>();
         if (visualPiece != null)
@@ -272,7 +272,8 @@ public class BoardManager : MonoBehaviourSingleton<BoardManager>
     {
         foreach (var vp in GetComponentsInChildren<VisualPiece>(true))
         {
-            vp.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+            if (vp == null) continue;
+            vp.transform.rotation = VisualPiece.LockedWorldRotation;
         }
     }
 

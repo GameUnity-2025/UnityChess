@@ -5,7 +5,12 @@ using static UnityChess.SquareUtil;
 
 public class VisualPiece : MonoBehaviour
 {
-    public delegate void VisualPieceMovedAction(Square movedPieceInitialSquare, Transform movedPieceTransform, Transform closestBoardSquareTransform, Piece promotionPiece = null);
+    public delegate void VisualPieceMovedAction(
+        Square movedPieceInitialSquare,
+        Transform movedPieceTransform,
+        Transform closestBoardSquareTransform,
+        Piece promotionPiece = null
+    );
     public static event VisualPieceMovedAction VisualPieceMoved;
 
     public Side PieceColor;
@@ -13,6 +18,11 @@ public class VisualPiece : MonoBehaviour
     public string PieceTypeManual;
 
     public Square CurrentSquare => StringToSquare(transform.parent.name);
+
+    // 🔥 TẤT CẢ quân cờ sẽ luôn xoay theo hướng nhìn sang TRÁI
+    // X = -90 để nằm ngang mặt bàn
+    // Y = -90 để quay mặt sang trái
+    public static readonly Quaternion LockedWorldRotation = Quaternion.Euler(-90f, 90f, 0f);
 
     private const float SquareCollisionRadius = 9f;
     private Camera boardCamera;
@@ -26,16 +36,13 @@ public class VisualPiece : MonoBehaviour
         thisTransform = transform;
         boardCamera = Camera.main;
 
-        // 1. Đặt tư thế cơ bản cho TẤT CẢ quân cờ: X = -90, giữ nguyên Y
-        Vector3 e = thisTransform.localRotation.eulerAngles;
-        thisTransform.localRotation = Quaternion.Euler(-90f, e.y, 0f);
+        LockRotation();
+    }
 
-        // 2. Riêng quân MÃ TRẮNG: xoay thêm 90 độ quanh trục Y
-        if (PieceColor == Side.White && PieceTypeManual == "Knight")
-        {
-             e = thisTransform.localRotation.eulerAngles;
-            thisTransform.localRotation = Quaternion.Euler(e.x, e.y + 180f, e.z);
-        }
+    private void LockRotation()
+    {
+        if (thisTransform != null)
+            thisTransform.rotation = LockedWorldRotation;
     }
 
     public void OnMouseDown()
@@ -45,40 +52,19 @@ public class VisualPiece : MonoBehaviour
         if (!enabled || thisTransform == null)
             return;
 
-        Debug.Log($"[VisualPiece] OnMouseDown triggered. Enabled: {enabled}");
+        if (this.piece == null) return;
+        if (GameManager.Instance == null) return;
+        if (GameManager.Instance.CurrentBoard == null) return;
 
-        if (this.piece == null)
-        {
-            Debug.LogError($"[VisualPiece] Piece object is null for {gameObject.name}");
-            return;
-        }
-        if (GameManager.Instance == null)
-        {
-            Debug.LogError("[VisualPiece] GameManager.Instance is null.");
-            return;
-        }
-
-        if (GameManager.Instance.CurrentBoard == null)
-        {
-            Debug.LogError("[VisualPiece] Game is not properly initialized. CurrentBoard is null.");
-            return;
-        }
-
-        Debug.Log($"[VisualPiece] OnMouseDown called for {this.piece.GetType().Name} at {CurrentSquare}. PieceColor: {PieceColor}, SideToMove: {GameManager.Instance.SideToMove}");
         HighlightManager.Instance.ClearHighlights();
 
         Piece currentPieceOnBoard = GameManager.Instance.CurrentBoard[CurrentSquare];
-        ICollection<Movement> legalMoves = null; // Khởi tạo để sửa lỗi CS0165
+        ICollection<Movement> legalMoves = null;
 
-        // Sửa lỗi CS1061: Truy cập logic game thông qua phương thức public TryGetLegalMoves
-        if (currentPieceOnBoard != null && GameManager.Instance.TryGetLegalMoves(currentPieceOnBoard, out legalMoves))
+        if (currentPieceOnBoard != null &&
+            GameManager.Instance.TryGetLegalMoves(currentPieceOnBoard, out legalMoves))
         {
-            Debug.Log($"[VisualPiece] Found {legalMoves.Count} legal moves for {currentPieceOnBoard.GetType().Name} at {CurrentSquare}.");
             HighlightManager.Instance.ShowHighlights(legalMoves, currentPieceOnBoard.Owner);
-        }
-        else
-        {
-            Debug.Log($"[VisualPiece] No legal moves found for {this.piece.GetType().Name} at {CurrentSquare} (or piece is null on board).");
         }
 
         piecePositionSS = boardCamera.WorldToScreenPoint(transform.position);
@@ -90,7 +76,12 @@ public class VisualPiece : MonoBehaviour
             return;
         if (enabled && thisTransform != null)
         {
-            Vector3 nextPiecePositionSS = new Vector3(Input.mousePosition.x, Input.mousePosition.y, piecePositionSS.z);
+            Vector3 nextPiecePositionSS = new Vector3(
+                Input.mousePosition.x,
+                Input.mousePosition.y,
+                piecePositionSS.z
+            );
+
             thisTransform.position = boardCamera.ScreenToWorldPoint(nextPiecePositionSS);
         }
     }
@@ -99,42 +90,42 @@ public class VisualPiece : MonoBehaviour
     {
         if (BoardManager.Instance != null && !BoardManager.Instance.IsUserInputEnabled)
             return;
-        if (enabled && thisTransform != null)
+        if (!enabled || thisTransform == null)
+            return;
+
+        HighlightManager.Instance.ClearHighlights();
+
+        potentialLandingSquares.Clear();
+        BoardManager.Instance.GetSquareGOsWithinRadius(
+            potentialLandingSquares,
+            thisTransform.position,
+            SquareCollisionRadius
+        );
+
+        if (potentialLandingSquares.Count == 0)
         {
-            HighlightManager.Instance.ClearHighlights();
+            thisTransform.position = thisTransform.parent.position;
+            LockRotation();
+            return;
+        }
 
-            potentialLandingSquares.Clear();
-            BoardManager.Instance.GetSquareGOsWithinRadius(potentialLandingSquares, thisTransform.position, SquareCollisionRadius);
+        Transform closestSquareTransform = potentialLandingSquares[0].transform;
+        float minDist = (closestSquareTransform.position - thisTransform.position).sqrMagnitude;
 
-            if (potentialLandingSquares.Count == 0)
+        for (int i = 1; i < potentialLandingSquares.Count; i++)
+        {
+            float d = (potentialLandingSquares[i].transform.position - thisTransform.position).sqrMagnitude;
+            if (d < minDist)
             {
-                thisTransform.position = thisTransform.parent.position;
-                return;
-            }
-
-            Transform closestSquareTransform = potentialLandingSquares[0].transform;
-            float shortestDistanceFromPieceSquared = (closestSquareTransform.position - thisTransform.position).sqrMagnitude;
-
-            for (int i = 1; i < potentialLandingSquares.Count; i++)
-            {
-                GameObject potentialLandingSquare = potentialLandingSquares[i];
-                float distanceFromPieceSquared = (potentialLandingSquare.transform.position - thisTransform.position).sqrMagnitude;
-
-                if (distanceFromPieceSquared < shortestDistanceFromPieceSquared)
-                {
-                    shortestDistanceFromPieceSquared = distanceFromPieceSquared;
-                    closestSquareTransform = potentialLandingSquare.transform;
-                }
-            }
-
-            VisualPieceMoved?.Invoke(CurrentSquare, thisTransform, closestSquareTransform);
-
-            // Check if transform still exists before accessing rotation
-            if (thisTransform != null)
-            {
-                thisTransform.rotation = Quaternion.Euler(-90f, thisTransform.rotation.eulerAngles.y, 0f);
+                minDist = d;
+                closestSquareTransform = potentialLandingSquares[i].transform;
             }
         }
+
+        VisualPieceMoved?.Invoke(CurrentSquare, thisTransform, closestSquareTransform);
+
+        // 🔒 EP LẠI HƯỚNG
+        LockRotation();
     }
 
     public string PieceType
