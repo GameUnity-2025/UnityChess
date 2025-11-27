@@ -623,7 +623,6 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
         string gameResultForHistory;
         string mode;
-        string reason;
         running = false;
 
         Side winningSide = Side.None;
@@ -632,14 +631,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
         {
             winningSide = SideToMove.Complement();
             gameResultForHistory = $"{winningSide} Wins";
-            reason = "Checkmate";
             LastEndReason = GameEndReason.Checkmate;
             LastWinner = winningSide;
         }
         else
         {
             gameResultForHistory = "Draw";
-            reason = "Stalemate";
             LastEndReason = GameEndReason.Stalemate;
             LastWinner = Side.None;
         }
@@ -760,13 +757,15 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
 
     private async void OnPieceMoved(Square movedPieceInitialSquare, Transform movedPieceTransform, Transform closestBoardSquareTransform, Piece promotionPiece = null)
     {
-        if (isReplayMode && !isReplayingMove)
+        try
         {
-            Debug.Log("Replay mode: Không thể di chuyển quân cờ!");
-            if (movedPieceTransform != null)
-                movedPieceTransform.position = movedPieceTransform.parent.position;
-            return;
-        }
+            if (isReplayMode && !isReplayingMove)
+            {
+                Debug.Log("Replay mode: Không thể di chuyển quân cờ!");
+                if (movedPieceTransform != null)
+                    movedPieceTransform.position = movedPieceTransform.parent.position;
+                return;
+            }
 
         Square endSquare = new Square(closestBoardSquareTransform.name);
 
@@ -812,7 +811,11 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             bool hasLast = game.HalfMoveTimeline.TryGetCurrent(out HalfMove lastHalfMoveAfterMove);
             bool isCheck = hasLast && lastHalfMoveAfterMove.CausedCheck;
 
-            if (isCheck) PlaySfx(sfxCheck);
+            if (isCheck)
+            {
+                Debug.Log($"[GameManager] Check detected! Side in check: {SideToMove}");
+                PlaySfx(sfxCheck);
+            }
             else PlaySfx(sfxMove);
         }
 
@@ -831,8 +834,15 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             && uciEngine != null
             && ((SideToMove == Side.White && isWhiteAI) || (SideToMove == Side.Black && isBlackAI)))
         {
+            Debug.Log($"[GameManager] AI turn detected. SideToMove: {SideToMove}, isWhiteAI: {isWhiteAI}, isBlackAI: {isBlackAI}");
+            IsAIThinking = true;
             int currentDepth = SideToMove == Side.White ? WhiteAIDifficulty : BlackAIDifficulty;
+            
+            // Small delay to prevent async stack overflow in AI vs AI
+            await Task.Delay(50);
+            
             Movement bestMove = await uciEngine.GetBestMove(aiThinkTimeMs, currentDepth);
+            IsAIThinking = false;
 
             if (bestMove != null)
             {
@@ -840,21 +850,36 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             }
             else
             {
-                Debug.LogError("AI Move failed after human move: Engine returned a null move.");
+                Debug.LogError("AI Move failed after human move: Engine returned a null move. Re-enabling user input.");
+                // Re-enable user input if AI fails
+                if (BoardManager.Instance != null)
+                {
+                    BoardManager.Instance.SetUserInputEnabled(true);
+                }
             }
         }
-
-        if (!gameIsOver
-                    && !isReplayMode
-                    && uciEngine != null
-                    && ((SideToMove == Side.White && isWhiteAI) || (SideToMove == Side.Black && isBlackAI)))
+        else if (!gameIsOver && !isReplayMode)
         {
-            IsAIThinking = true;
-            int currentDepth = SideToMove == Side.White ? WhiteAIDifficulty : BlackAIDifficulty;
-            Movement bestMove = await uciEngine.GetBestMove(aiThinkTimeMs, currentDepth);
-            IsAIThinking = false;
-
-            if (bestMove != null) DoAIMove(bestMove);
+            // Ensure user input is enabled when it's human's turn after AI move
+            bool humanTurn = (SideToMove == Side.White && !isWhiteAI) || (SideToMove == Side.Black && !isBlackAI);
+            if (humanTurn && BoardManager.Instance != null)
+            {
+                Debug.Log($"[GameManager] Human turn after AI move. Enabling user input. SideToMove: {SideToMove}");
+                BoardManager.Instance.SetUserInputEnabled(true);
+            }
+        }
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError($"[GameManager] EXCEPTION in OnPieceMoved: {ex.Message}\n{ex.StackTrace}");
+            
+            // Critical: Always re-enable user input on exception to prevent freeze
+            bool humanTurn = (SideToMove == Side.White && !isWhiteAI) || (SideToMove == Side.Black && !isBlackAI);
+            if (humanTurn && BoardManager.Instance != null)
+            {
+                Debug.LogWarning($"[GameManager] Re-enabling user input after exception. SideToMove: {SideToMove}");
+                BoardManager.Instance.SetUserInputEnabled(true);
+            }
         }
     }
 
@@ -883,14 +908,12 @@ public class GameManager : MonoBehaviourSingleton<GameManager>
             return;
         }
 
-        isReplayingMove = true;
         OnPieceMoved(
-        move.Start,
-        movedPiece.transform,
-        endSquareGO.transform,
-        (move as PromotionMove)?.PromotionPiece
+            move.Start,
+            movedPiece.transform,
+            endSquareGO.transform,
+            (move as PromotionMove)?.PromotionPiece
         );
-        isReplayingMove = false;
     }
 
     public bool HasLegalMoves(Piece piece)
