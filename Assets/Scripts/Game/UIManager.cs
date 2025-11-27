@@ -41,6 +41,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     [SerializeField] private Button resignButton = null;
     [SerializeField] private Button drawButton = null;
 
+    [Header("Pause Button Icons")]
+    [SerializeField] private Image pauseButtonImage = null;
+    [SerializeField] private Sprite pauseIcon = null;       
+    [SerializeField] private Sprite playIcon = null;
+
     [Header("Timer")]
     [SerializeField] private GameObject timerPanel = null;
 
@@ -191,6 +196,13 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
     {
         UpdateGameStringInputField();
         ValidateIndicators();
+
+        isPaused = false;
+
+        if (pauseButtonImage != null && pauseIcon != null)
+        {
+            pauseButtonImage.sprite = pauseIcon;
+        }
 
         Side sideToMove = GameManager.Instance.SideToMove;
         if (turnIndicatorText) turnIndicatorText.text = sideToMove == Side.White ? "White's Turn" : "Black's Turn";
@@ -597,6 +609,11 @@ public class UIManager : MonoBehaviourSingleton<UIManager>
 
         if (pauseButtonText)
             pauseButtonText.text = isPaused ? "Continue" : "Pause";
+
+        if (pauseButtonImage != null && pauseIcon != null && playIcon != null)
+        {
+            pauseButtonImage.sprite = isPaused ? playIcon : pauseIcon;
+        }
 
         if (isPaused)
         {
