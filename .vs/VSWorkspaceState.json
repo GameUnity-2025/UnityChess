@@ -2,9 +2,8 @@
   "ExpandedNodes": [
     "",
     "\\Assets",
-    "\\Assets\\Scripts",
-    "\\Assets\\Scripts\\Game"
+    "\\Assets\\Scripts"
   ],
-  "SelectedNode": "\\Assets\\Scripts\\Game\\VisualPiece.cs",
+  "SelectedNode": "\\Assets\\Scripts\\ChessDotNet.meta",
   "PreviewInSolutionExplorer": false
 }
